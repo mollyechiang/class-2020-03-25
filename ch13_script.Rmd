@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(rstanarm)
 library(tidyverse)
+library(gtools)
 
 load("nes.rda")
 
@@ -30,21 +31,92 @@ x <- nes %>%
 
 **Prompt:** We are still using data from the National Election Survey. We have added some new variables: `rvote` and `dvote`. Poke and around. Find things that are suspicious about this data.
 
+not the same number of observations in each year.
+
 # Scene 2
 
 **Prompt:** Let's try to understand things which are associated with `dvote`, which is (claiming to have cast) a vote for the Democratic candidate for President. Estimate two models (`z_old` and `z_stan`) which uses `gender` to explain `dvote`. `z_old` uses the standard `glm()` command. `z_stan()` uses `stan_glm()`. Interpret the results from both printing the simple model objects and for running `summary()` on them.
+
+```{r models}
+
+z_old <- glm(dvote ~ gender, data = x, family = "binomial")
+z_stan <- stan_glm(dvote ~ gender, data = x, refresh = 0, family = "binomial")
+
+print(z_old, digits = 2)
+print(z_stan, digits = 2)
+
+summary(z_old)
+summary(z_stan)
+
+# stan results are veryyy similar to the glm results 
+
+# bayesian and frequentist models w/ a lot of data are usually very similar - bayesian is just more complex and better at dealing with more complex data
+
+```
+
+FOR LINEAR MODEL: The intercept value gives an estimate of the dvote value for a female. Since we are dealing with a binary variable (dvote is 0 or 1), this indicates 46% of females would have a dvote value of 1, indicating 
+
+FOR BINOMIAL:
+- 1/(1 + exp(intercept)) -- gives prob of female dvote
+
+Probabilty of voting democrat = logit^(-1)(-0.1 + -0.2*gender)
+
+according to divide-by-4 rule - -.2 varaible indicates a change from female to non-female is correlated with a no more than -.05% difference in the probability of voting democrat. 
+- dividing by 4 gives rough sense
+- rule of 4 can only be applied to the coefficient - not the intercept!
+
 
 # Scene 3
 
 **Prompt:** For females, the intercept is -0.1. What does that mean? For men, it is -0.1 + (-0.2) = -0.3. What is the substance meaning of -0.1 and -0.3? 
 
+females: 1/(1 + exp(-.1)) -- gives prob of female dvote
+males: 1/(1 + exp((-.1 - -.2)*-1)) 
+
+```{r}
+
+#plogis is a function makes values into the probability space
+
+invlogit <- plogis
+invlogit(-.14)
+
+# invlogit brings us to probability space - makes the coefficients more interpretable
+
+1/(1 + exp(.14))
+
+```
+
+
+
 # Scene 4
 
-**Prompt:** Let's look more closely at the coefficent on `non-female`. Interpret what it means. Can you put its magnitude onto the same scale as the outcome? That is, what I really want to know iw how much more (less?) likely men are to vote for the Democrat than women.  (Don't forget the divide-by-4 rule.) Now, just using simple dplyr commands, confirm that this is, in fact, the case in the raw data.
+**Prompt:** Let's look more closely at the coefficent on `non-female`. Interpret what it means. Can you put its magnitude onto the same scale as the outcome? That is, what I really want to know is how much more (less?) likely men are to vote for the Democrat than women.  (Don't forget the divide-by-4 rule.) Now, just using simple dplyr commands, confirm that this is, in fact, the case in the raw data.
+
+Men have a .05% lower probability of voting democrat
+
+```{r}
+
+x %>%
+  filter(gender == "female") %>%
+  summarize(perc_dvote = mean(dvote))
+
+# we see the percentage of females that voted democratic matches the invlog of the value we got from our logistic regression
+
+```
+
 
 # Scene 5
 
 **Prompt:** We have a model. Cool! Assume that we have new "data", a tibble with one row and one variable, `gender`, which is "female". What is the probability that this new person for vote Democratic?
+
+Probabilty of voting democrat = logit^(-1)(-0.1 + -0.2*gender)
+```{r}
+
+#female
+inv.logit(-.1 + -.2*1)
+
+
+```
 
 # Scene 6
 
