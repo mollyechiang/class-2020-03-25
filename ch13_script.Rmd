@@ -49,6 +49,7 @@ summary(z_old)
 summary(z_stan)
 
 # stan results are veryyy similar to the glm results 
+# stan just gives us more results
 
 # bayesian and frequentist models w/ a lot of data are usually very similar - bayesian is just more complex and better at dealing with more complex data
 
@@ -112,9 +113,10 @@ x %>%
 Probabilty of voting democrat = logit^(-1)(-0.1 + -0.2*gender)
 ```{r}
 
-#female
-inv.logit(-.1 + -.2*1)
+y <- tibble(gender = "female")
 
+#female
+new_person_vote_dem <- invlogit(-.14 + -.22*1)
 
 ```
 
@@ -122,9 +124,47 @@ inv.logit(-.1 + -.2*1)
 
 **Prompt:** So, with rstanarm models, at least, `predict()` doesn't (ever?) work. Instead, we need to use `posterior_linpred()`. But it sure is confusing! Continuing with our simple case of one new female observation, use `posterior_linpred()`, understand its outputs, and the provide a graphical display of those outputs. (Hint: Check the class of the output. It isn't a tibble!)
 
+```{r}
+
+# predict gives a point answer - and doesn't give uncertainty
+# while posterior lin pred gives you a ton of answers - so you can make uncertainty
+
+
+results <- posterior_linpred(z_stan, newdata = y)
+
+hist(results)
+#xaxis is the distributions of logodds version of probability the new female votes democrat
+
+```
+
+
+
 # Scene 7
 
 **Prompt:** Estimate a new model of `dvote`, this time with two explanatory variables: `gender` and `real_ideo`. (Like last time, you should treat `real_ideo` as a continuous variable.) Redo most of the above explorations with this new model.
+
+```{r}
+
+new_model <- stan_glm(dvote ~ gender + real_ideo, data = x, refresh = 0, family = "binomial")
+
+print(new_model, digits = 2)
+summary(new_model)
+
+# interpreting inrtercept
+invlogit(3.44)
+# tells us the probability of a female w/ real ideo of 0 voting democrat - 97%
+
+# interpreting gendernonfemale 
+invlogit(3.44 -.15)
+# tells us male w/ real ideo 0 - 96% prob of voting dem
+
+# interpreting real_ideo
+invlogit(3.44 - .85)
+#
+
+```
+
+
 
 # Scene 8
 
