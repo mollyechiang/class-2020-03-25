@@ -1,0 +1,68 @@
+---
+title: "Chapter 13"
+author: "David Kane"
+date: "3/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rstanarm)
+library(tidyverse)
+
+load("nes.rda")
+
+x <- nes %>% 
+  as_tibble() %>% 
+  select(year, dvote, partyid7, real_ideo, race_adj, 
+         age_discrete, educ1, female, income) %>% 
+  drop_na() %>% 
+  mutate(gender = as.factor(ifelse(female == 1, "female", "non-female"))) %>% 
+  mutate(race = as.factor(case_when(race_adj == 1 ~ "White",
+                                    race_adj == 2 ~ "Black",
+                                    TRUE ~ "Other"))) %>% 
+  select(-female, -race_adj)
+```
+
+
+
+# Scene 1
+
+**Prompt:** We are still using data from the National Election Survey. We have added some new variables: `rvote` and `dvote`. Poke and around. Find things that are suspicious about this data.
+
+# Scene 2
+
+**Prompt:** Let's try to understand things which are associated with `dvote`, which is (claiming to have cast) a vote for the Democratic candidate for President. Estimate two models (`z_old` and `z_stan`) which uses `gender` to explain `dvote`. `z_old` uses the standard `glm()` command. `z_stan()` uses `stan_glm()`. Interpret the results from both printing the simple model objects and for running `summary()` on them.
+
+# Scene 3
+
+**Prompt:** For females, the intercept is -0.1. What does that mean? For men, it is -0.1 + (-0.2) = -0.3. What is the substance meaning of -0.1 and -0.3? 
+
+# Scene 4
+
+**Prompt:** Let's look more closely at the coefficent on `non-female`. Interpret what it means. Can you put its magnitude onto the same scale as the outcome? That is, what I really want to know iw how much more (less?) likely men are to vote for the Democrat than women.  (Don't forget the divide-by-4 rule.) Now, just using simple dplyr commands, confirm that this is, in fact, the case in the raw data.
+
+# Scene 5
+
+**Prompt:** We have a model. Cool! Assume that we have new "data", a tibble with one row and one variable, `gender`, which is "female". What is the probability that this new person for vote Democratic?
+
+# Scene 6
+
+**Prompt:** So, with rstanarm models, at least, `predict()` doesn't (ever?) work. Instead, we need to use `posterior_linpred()`. But it sure is confusing! Continuing with our simple case of one new female observation, use `posterior_linpred()`, understand its outputs, and the provide a graphical display of those outputs. (Hint: Check the class of the output. It isn't a tibble!)
+
+# Scene 7
+
+**Prompt:** Estimate a new model of `dvote`, this time with two explanatory variables: `gender` and `real_ideo`. (Like last time, you should treat `real_ideo` as a continuous variable.) Redo most of the above explorations with this new model.
+
+# Scene 8
+
+**Prompt:** So far, we have pooled all our data together. But what if we wanted to estimate a different model for each year. Do that with our gender/real_ideo explanatory variables! (Might want to see how *PPBDS* [does that](https://davidkane9.github.io/PPBDS/13-classification.html#fitting-many-models-using-map-1).)
+
+# Scene 9
+
+**Prompt:** Now that you have an object with many models. Can you tell us the election in which men/women were most split in their voting? How about in which election ideology mattered most? How about which election this model worked "best" for? Are there other interesting questions which we can explore?
+
+# Scene 10
+
+**Prompt:** Let's make a plot! Page 207 has a graph which shows the association between income and voting across these years. Make a similar plot, but for `gender` and `real_ideo`. Does the latest version of ggplot make this easier?
+
